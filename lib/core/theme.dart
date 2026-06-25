@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
-/// Палитра «Ember» — тёплый уголёк на тёмном фоне.
+/// Палитра «Ember» — тёплый уголёк на глубоком тёмном фоне + золотой premium-акцент.
 class EmberColors {
   EmberColors._();
 
-  static const background = Color(0xFF14110F);
-  static const surface = Color(0xFF1F1A17);
-  static const surfaceAlt = Color(0xFF2A2320);
-  static const ember = Color(0xFFFF7A18); // оранжевый огонёк
+  static const background = Color(0xFF120F0D);
+  static const surface = Color(0xFF1E1916);
+  static const surfaceAlt = Color(0xFF2A231F);
+  static const ember = Color(0xFFFF7A18); // основной огонёк
   static const emberSoft = Color(0xFFFFB061);
-  static const textPrimary = Color(0xFFF5EFE9);
-  static const textMuted = Color(0xFF9C9088);
+  static const gold = Color(0xFFF4B740); // premium-акцент
+  static const textPrimary = Color(0xFFF6EFE8);
+  static const textMuted = Color(0xFF9A8C82);
 }
 
 ThemeData buildEmberTheme() {
@@ -22,7 +24,8 @@ ThemeData buildEmberTheme() {
       secondary: EmberColors.emberSoft,
       surface: EmberColors.surface,
     ),
-    textTheme: base.textTheme.apply(
+    // Базовый шрифт интерфейса — Manrope (чистый, премиальный).
+    textTheme: GoogleFonts.manropeTextTheme(base.textTheme).apply(
       bodyColor: EmberColors.textPrimary,
       displayColor: EmberColors.textPrimary,
     ),
@@ -30,9 +33,12 @@ ThemeData buildEmberTheme() {
       style: FilledButton.styleFrom(
         backgroundColor: EmberColors.ember,
         foregroundColor: Colors.black,
-        minimumSize: const Size.fromHeight(54),
-        textStyle: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        minimumSize: const Size.fromHeight(56),
+        textStyle: GoogleFonts.manrope(
+          fontSize: 17,
+          fontWeight: FontWeight.w700,
+        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
       ),
     ),
   );

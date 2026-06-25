@@ -9,6 +9,8 @@ class PrefKeys {
   static const lastOpenDate = 'last_open_date';
   static const favorites = 'favorites';
   static const selectedTheme = 'selected_theme';
+  static const reminderEnabled = 'reminder_enabled';
+  static const reminderHour = 'reminder_hour';
 }
 
 /// Тарифные планы на пейволле.

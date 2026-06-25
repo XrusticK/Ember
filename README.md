@@ -6,36 +6,43 @@
 
 Тестовое задание на Flutter. Приложение под **iOS и Android**, полностью офлайн.
 
-## Что внутри (по ТЗ)
+## Что внутри
 
 - **Онбординг** (2 экрана): смысл продукта → выбор настроения
   (Спокойствие · Фокус · Мотивация · Стоицизм).
+- **Главный экран**: карточка «мысль дня» + кнопка «Прочитал», живой анимированный
+  огонёк-стрик, избранное. **Архив открывается только после прочтения** сегодняшней
+  карточки; у бесплатных пользователей он заблюрен — нативный триггер пейвола.
 - **Пейвол**: два плана — Месяц / Год (год дешевле, выбран по умолчанию). «Продолжить»
-  *эмулирует* покупку (без реального биллинга) и пишет флаг в хранилище.
-- **Главный экран**: карточка «мысль дня» + кнопка ✓ «Прочитал», бейдж стрика (🔥),
-  лента-архив (для бесплатной версии заблюрена — нативный триггер пейвола), избранное.
-- **Сохранение подписки**: если «купил» — следующий запуск открывает сразу главный
-  экран, минуя онбординг и пейвол. Хранилище — `shared_preferences`.
+  *эмулирует* покупку (без реального биллинга). Подписку можно купить **в любой момент**
+  — из баннера или с замка архива.
+- **Сохранение подписки и стрика**: флаг `is_premium` и стрик персистентны
+  (`shared_preferences`) — премиум остаётся после перезапуска.
+- **Пуши**: ежедневное локальное напоминание (включается в настройках, выбор времени).
+- **100 реальных цитат** по 4 темам; у каждой темы **свой шрифт и акцентный цвет**
+  (Lora / Manrope / Montserrat / Playfair Display).
+- **Делайт**: дышащее свечение огонька, праздничный всплеск при росте стрика, плавные
+  переходы 150–300мс, премиальная тёмно-«угольная» палитра с золотым акцентом.
 
 ## Архитектура
 
 Слоистая, на `provider`:
 
 ```
-core    → константы, тема
-data    → PrefsService (обёртка SharedPreferences), QuotesRepository, модель Quote
+core    → константы, тема, mood_style (шрифт+акцент под тему)
+data    → PrefsService, QuotesRepository, NotificationService, модель Quote
 state   → AppState (ChangeNotifier, единый источник правды) + чистая логика стрика
-features→ экраны: onboarding / paywall / home
-widgets → переиспользуемый UI: QuoteCard, StreakBadge
-assets  → quotes.json (локальный контент)
+features→ экраны: onboarding / paywall / home / settings
+widgets → QuoteCard, StreakBadge, EmberFlame, StreakCelebration, PremiumBanner
+assets  → quotes.json (100 цитат, локальный контент)
 ```
 
 Ключевые принципы:
 - **Один источник правды.** `AppState` — единственный, кто трогает `PrefsService`;
   UI не лезет в хранилище и ассеты напрямую.
 - **Роутинг в одном месте.** `AppState.resolveInitialRoute()`:
-  `onboarding_done == false → онбординг`, иначе `is_premium == false → пейвол`,
-  иначе → главный. Это и есть «купил → сразу главный».
+  `onboarding_done == false → онбординг`, иначе → главный. Подписка не блокирует вход
+  (покупается в любой момент), `is_premium` лишь открывает архив и фичи.
 - **Тестируемая логика.** Подсчёт стрика вынесен в чистую функцию
   (`state/streak.dart`) и покрыт юнит-тестами, без виджетов.
 
@@ -54,13 +61,13 @@ assets  → quotes.json (локальный контент)
 ```
 lib/
   main.dart, app.dart
-  core/      constants.dart, theme.dart
-  data/      prefs_service.dart, quotes_repository.dart, models/quote.dart
+  core/      constants.dart, theme.dart, mood_style.dart
+  data/      prefs_service.dart, quotes_repository.dart, notification_service.dart, models/quote.dart
   state/     app_state.dart, streak.dart
-  features/  onboarding/ paywall/ home/
-  widgets/   quote_card.dart, streak_badge.dart
-assets/      quotes.json
-test/        widget_test.dart  (юнит-тесты стрика)
+  features/  onboarding/ paywall/ home/ settings/
+  widgets/   quote_card, streak_badge, ember_flame, streak_celebration, premium_banner
+assets/      quotes.json  (100 цитат)
+test/        widget_test.dart (стрик), onboarding_flow_test.dart (онбординг)
 ```
 
 ## Запуск

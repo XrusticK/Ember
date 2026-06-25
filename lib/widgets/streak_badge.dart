@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../core/theme.dart';
+import 'ember_flame.dart';
 
-/// Счётчик стрика с огоньком: 🔥 7.
+/// Счётчик стрика с живым огоньком. Если стрик 0 — огонёк «потух» (приглушён).
 class StreakBadge extends StatelessWidget {
   const StreakBadge({super.key, required this.count});
 
@@ -10,6 +11,7 @@ class StreakBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final alive = count > 0;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       decoration: BoxDecoration(
@@ -19,14 +21,21 @@ class StreakBadge extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Text('🔥', style: TextStyle(fontSize: 18)),
-          const SizedBox(width: 6),
+          if (alive)
+            const EmberFlame(size: 20)
+          else
+            Icon(
+              Icons.local_fire_department_outlined,
+              size: 20,
+              color: EmberColors.textMuted,
+            ),
+          const SizedBox(width: 8),
           Text(
             '$count',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 16,
-              fontWeight: FontWeight.w700,
-              color: EmberColors.emberSoft,
+              fontWeight: FontWeight.w800,
+              color: alive ? EmberColors.emberSoft : EmberColors.textMuted,
             ),
           ),
           const SizedBox(width: 4),

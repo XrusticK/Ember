@@ -36,4 +36,13 @@ class PrefsService {
   String? get selectedTheme => _prefs.getString(PrefKeys.selectedTheme);
   Future<void> setSelectedTheme(String v) =>
       _prefs.setString(PrefKeys.selectedTheme, v);
+
+  bool get reminderEnabled => _prefs.getBool(PrefKeys.reminderEnabled) ?? false;
+  Future<void> setReminderEnabled(bool v) =>
+      _prefs.setBool(PrefKeys.reminderEnabled, v);
+
+  /// Час ежедневного напоминания (0–23), по умолчанию 20:00.
+  int get reminderHour => _prefs.getInt(PrefKeys.reminderHour) ?? 20;
+  Future<void> setReminderHour(int v) =>
+      _prefs.setInt(PrefKeys.reminderHour, v);
 }

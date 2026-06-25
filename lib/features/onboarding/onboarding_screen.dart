@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/constants.dart';
+import '../../core/mood_style.dart';
 import '../../core/theme.dart';
 import '../../state/app_state.dart';
-import '../paywall/paywall_screen.dart';
+import '../../widgets/ember_flame.dart';
+import '../home/home_screen.dart';
 
 /// Онбординг из двух экранов: смысл продукта -> выбор настроения.
 class OnboardingScreen extends StatefulWidget {
@@ -42,7 +44,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     if (!mounted) return;
     Navigator.of(
       context,
-    ).pushReplacement(MaterialPageRoute(builder: (_) => const PaywallScreen()));
+    ).pushReplacement(MaterialPageRoute(builder: (_) => const HomeScreen()));
   }
 
   @override
@@ -70,7 +72,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               padding: const EdgeInsets.all(24),
               child: FilledButton(
                 onPressed: canContinue ? _next : null,
-                child: Text(_page == 0 ? 'Продолжить' : 'Начать'),
+                child: Text(_page == 0 ? 'Продолжить' : 'Зажечь огонёк'),
               ),
             ),
           ],
@@ -90,23 +92,27 @@ class _IntroPage extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: const [
-          Text('🔥', style: TextStyle(fontSize: 96)),
-          SizedBox(height: 32),
+          EmberFlame(size: 120),
+          SizedBox(height: 36),
           Text(
             'Одна мысль в день.\nБольшие сдвиги за год.',
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 26,
-              fontWeight: FontWeight.w700,
-              height: 1.3,
+              fontSize: 28,
+              fontWeight: FontWeight.w800,
+              height: 1.25,
             ),
           ),
           SizedBox(height: 16),
           Text(
             'Заходи каждый день, отмечай прочитанное — '
-            'и поддерживай свой огонёк.',
+            'и поддерживай свой огонёк. Пропустишь — он погаснет.',
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 16, color: EmberColors.textMuted),
+            style: TextStyle(
+              fontSize: 16,
+              height: 1.5,
+              color: EmberColors.textMuted,
+            ),
           ),
         ],
       ),
@@ -130,11 +136,11 @@ class _MoodPage extends StatelessWidget {
         children: [
           const Text(
             'Что тебе ближе сейчас?',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700),
+            style: TextStyle(fontSize: 26, fontWeight: FontWeight.w800),
           ),
           const SizedBox(height: 8),
           const Text(
-            'Подберём ленту под твоё настроение.',
+            'Подберём ленту и оформление под твоё настроение.',
             style: TextStyle(fontSize: 15, color: EmberColors.textMuted),
           ),
           const SizedBox(height: 24),
@@ -143,38 +149,36 @@ class _MoodPage extends StatelessWidget {
             return Padding(
               padding: const EdgeInsets.only(bottom: 12),
               child: InkWell(
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(18),
                 onTap: () => onSelect(t),
-                child: Container(
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
                   padding: const EdgeInsets.symmetric(
                     horizontal: 18,
                     vertical: 18,
                   ),
                   decoration: BoxDecoration(
                     color: EmberColors.surface,
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(18),
                     border: Border.all(
-                      color: isOn ? EmberColors.ember : Colors.transparent,
+                      color: isOn ? t.accent : Colors.transparent,
                       width: 2,
                     ),
                   ),
                   child: Row(
                     children: [
-                      Text(t.emoji, style: const TextStyle(fontSize: 24)),
-                      const SizedBox(width: 14),
+                      _MoodIcon(theme: t, active: isOn),
+                      const SizedBox(width: 16),
                       Text(
                         t.title,
-                        style: const TextStyle(
-                          fontSize: 17,
-                          fontWeight: FontWeight.w600,
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: isOn ? t.accent : EmberColors.textPrimary,
                         ),
                       ),
                       const Spacer(),
-                      if (isOn)
-                        const Icon(
-                          Icons.check_circle,
-                          color: EmberColors.ember,
-                        ),
+                      if (isOn) Icon(Icons.check_circle, color: t.accent),
                     ],
                   ),
                 ),
@@ -183,6 +187,33 @@ class _MoodPage extends StatelessWidget {
           }),
         ],
       ),
+    );
+  }
+}
+
+class _MoodIcon extends StatelessWidget {
+  const _MoodIcon({required this.theme, required this.active});
+
+  final MoodTheme theme;
+  final bool active;
+
+  IconData get _icon => switch (theme) {
+    MoodTheme.calm => Icons.spa_outlined,
+    MoodTheme.focus => Icons.center_focus_strong_outlined,
+    MoodTheme.motivation => Icons.bolt_outlined,
+    MoodTheme.stoicism => Icons.account_balance_outlined,
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 44,
+      height: 44,
+      decoration: BoxDecoration(
+        color: theme.accent.withValues(alpha: active ? 0.22 : 0.12),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Icon(_icon, color: theme.accent),
     );
   }
 }

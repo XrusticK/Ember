@@ -2,11 +2,14 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 
+import '../core/constants.dart';
+import '../core/mood_style.dart';
 import '../core/theme.dart';
 import '../data/models/quote.dart';
 
-/// Карточка-мысль. Может быть «героической» (большая, мысль дня)
-/// или компактной (в архиве). Поддерживает блюр-замок для бесплатной версии.
+/// Карточка-мысль. Шрифт и акцент подбираются под тему карточки.
+/// hero — большая «мысль дня», обычная — компактная карточка архива.
+/// locked — заблюренная карточка-замок (триггер пейвола для бесплатной версии).
 class QuoteCard extends StatelessWidget {
   const QuoteCard({
     super.key,
@@ -15,6 +18,7 @@ class QuoteCard extends StatelessWidget {
     this.locked = false,
     this.isFavorite = false,
     this.onFavorite,
+    this.onTapLocked,
   });
 
   final Quote quote;
@@ -22,42 +26,57 @@ class QuoteCard extends StatelessWidget {
   final bool locked;
   final bool isFavorite;
   final VoidCallback? onFavorite;
+  final VoidCallback? onTapLocked;
 
   @override
   Widget build(BuildContext context) {
+    final mood = MoodThemeInfo.fromId(quote.theme);
+
     final card = Container(
       width: double.infinity,
       padding: EdgeInsets.all(hero ? 28 : 20),
       decoration: BoxDecoration(
         gradient: hero
-            ? const LinearGradient(
-                colors: [EmberColors.surfaceAlt, EmberColors.surface],
+            ? LinearGradient(
+                colors: mood.cardGradient,
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               )
             : null,
         color: hero ? null : EmberColors.surface,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(22),
         border: Border.all(
           color: hero
-              ? EmberColors.ember.withValues(alpha: 0.4)
+              ? mood.accent.withValues(alpha: 0.45)
               : Colors.white.withValues(alpha: 0.06),
         ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            quote.text,
-            style: TextStyle(
-              fontSize: hero ? 24 : 16,
-              height: 1.35,
-              fontWeight: hero ? FontWeight.w600 : FontWeight.w500,
-              color: EmberColors.textPrimary,
-            ),
+          Row(
+            children: [
+              Icon(
+                Icons.format_quote_rounded,
+                color: mood.accent,
+                size: hero ? 28 : 20,
+              ),
+              const Spacer(),
+              Text(
+                mood.title.toUpperCase(),
+                style: TextStyle(
+                  fontSize: 11,
+                  letterSpacing: 1.5,
+                  fontWeight: FontWeight.w700,
+                  color: mood.accent,
+                ),
+              ),
+            ],
           ),
+          SizedBox(height: hero ? 18 : 12),
+          Text(quote.text, style: mood.quoteStyle(fontSize: hero ? 24 : 16)),
           if (quote.author != null) ...[
-            const SizedBox(height: 12),
+            SizedBox(height: hero ? 16 : 10),
             Text(
               '— ${quote.author}',
               style: const TextStyle(
@@ -67,45 +86,60 @@ class QuoteCard extends StatelessWidget {
               ),
             ),
           ],
-          if (onFavorite != null) ...[
-            const SizedBox(height: 8),
+          if (onFavorite != null)
             Align(
               alignment: Alignment.centerRight,
               child: IconButton(
                 onPressed: onFavorite,
                 icon: Icon(
                   isFavorite ? Icons.favorite : Icons.favorite_border,
-                  color: isFavorite ? EmberColors.ember : EmberColors.textMuted,
+                  color: isFavorite ? mood.accent : EmberColors.textMuted,
                 ),
               ),
             ),
-          ],
         ],
       ),
     );
 
     if (!locked) return card;
 
-    // Заблокированная карточка архива: размытие + замок (триггер пейвола).
-    return Stack(
-      children: [
-        ClipRRect(
-          borderRadius: BorderRadius.circular(20),
-          child: ImageFiltered(
-            imageFilter: ImageFilter.blur(sigmaX: 7, sigmaY: 7),
-            child: card,
-          ),
-        ),
-        Positioned.fill(
-          child: Center(
-            child: Icon(
-              Icons.lock_outline,
-              color: EmberColors.emberSoft.withValues(alpha: 0.9),
-              size: 28,
+    // Заблокированная карточка архива: размытие + замок + CTA пейвола.
+    return GestureDetector(
+      onTap: onTapLocked,
+      child: Stack(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(22),
+            child: ImageFiltered(
+              imageFilter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+              child: card,
             ),
           ),
-        ),
-      ],
+          Positioned.fill(
+            child: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.lock_outline,
+                    color: EmberColors.gold.withValues(alpha: 0.95),
+                    size: 26,
+                  ),
+                  const SizedBox(height: 6),
+                  const Text(
+                    'Premium',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: EmberColors.gold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

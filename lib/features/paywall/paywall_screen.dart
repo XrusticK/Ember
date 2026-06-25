@@ -4,10 +4,12 @@ import 'package:provider/provider.dart';
 import '../../core/constants.dart';
 import '../../core/theme.dart';
 import '../../state/app_state.dart';
-import '../home/home_screen.dart';
+import '../../widgets/ember_flame.dart';
 
 /// Пейвол: два плана (Месяц / Год). Год выбран по умолчанию и выгоднее.
 /// «Продолжить» эмулирует покупку и пишет флаг в хранилище.
+/// Открывается по запросу (баннер / замок архива), подписку можно купить
+/// в любой момент.
 class PaywallScreen extends StatefulWidget {
   const PaywallScreen({super.key});
 
@@ -31,23 +33,29 @@ class _PaywallScreenState extends State<PaywallScreen> {
     setState(() => _busy = true);
     await context.read<AppState>().purchase(_selected);
     if (!mounted) return;
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => const HomeScreen()),
-      (route) => false,
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Premium активирован 🔥 Архив открыт')),
     );
+    Navigator.of(context).maybePop();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        leading: IconButton(
+          icon: const Icon(Icons.close),
+          onPressed: () => Navigator.of(context).maybePop(),
+        ),
+      ),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24),
           child: Column(
             children: [
+              const EmberFlame(size: 64),
               const SizedBox(height: 16),
-              const Text('🔥', style: TextStyle(fontSize: 56)),
-              const SizedBox(height: 12),
               const Text(
                 'Ember Premium',
                 style: TextStyle(fontSize: 26, fontWeight: FontWeight.w800),
