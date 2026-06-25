@@ -13,7 +13,9 @@ import '../../widgets/streak_celebration.dart';
 import '../paywall/paywall_screen.dart';
 import '../settings/settings_sheet.dart';
 
-/// Главный экран: мысль дня + стрик + архив (открывается после прочтения).
+/// Главный экран: «мысль дня» + стрик + архив прочитанного.
+/// Каждый день карточка дня новая. После «Прочитал» она уходит в архив —
+/// в архиве копятся только прочитанные карточки.
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -37,9 +39,9 @@ class _HomeScreenState extends State<HomeScreen> {
     return list[dayOfYear % list.length];
   }
 
-  Future<void> _onRead() async {
+  Future<void> _onRead(String quoteId) async {
     final app = context.read<AppState>();
-    final grew = await app.markTodayRead();
+    final grew = await app.markTodayRead(quoteId: quoteId);
     if (grew && mounted) {
       await showStreakCelebration(context, app.streak);
     }
@@ -78,56 +80,64 @@ class _HomeScreenState extends State<HomeScreen> {
           if (!snap.hasData) {
             return const Center(child: CircularProgressIndicator());
           }
+          final all = snap.data!;
+          final byId = {for (final q in all) q.id: q};
+
           // Лента под выбранную тему (с фолбэком на все карточки).
-          final themed = snap.data!
+          final themed = all
               .where((q) => q.theme == app.selectedTheme.id)
               .toList();
-          final list = themed.isEmpty ? snap.data! : themed;
+          final pool = themed.isEmpty ? all : themed;
 
-          final today = _quoteOfDay(list);
-          final archive = list.where((q) => q.id != today.id).toList();
+          final today = _quoteOfDay(pool);
           final read = app.isTodayRead;
+
+          // Архив = прочитанные карточки, новые сверху.
+          final archive = app.readQuotes.reversed
+              .map((id) => byId[id])
+              .whereType<Quote>()
+              .toList();
 
           return ListView(
             padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
             children: [
               _sectionLabel('Мысль дня'),
               const SizedBox(height: 12),
-              QuoteCard(
-                quote: today,
-                hero: true,
-                isFavorite: app.isFavorite(today.id),
-                onFavorite: () => app.toggleFavorite(today.id),
-              ),
-              const SizedBox(height: 16),
-              _ReadButton(done: read, onTap: _onRead),
+              if (!read) ...[
+                QuoteCard(
+                  quote: today,
+                  hero: true,
+                  isFavorite: app.isFavorite(today.id),
+                  onFavorite: () => app.toggleFavorite(today.id),
+                ),
+                const SizedBox(height: 16),
+                FilledButton.icon(
+                  onPressed: () => _onRead(today.id),
+                  icon: const Icon(Icons.local_fire_department),
+                  label: const Text('Прочитал — поддержать огонёк'),
+                ),
+              ] else
+                _ReadConfirmation(streak: app.streak),
               if (!app.isPremium) ...[
                 const SizedBox(height: 16),
                 PremiumBanner(onTap: _openPaywall),
               ],
               const SizedBox(height: 28),
-              // Архив открывается только после прочтения сегодняшней карточки.
-              if (!read)
-                _ArchiveLockedHint()
-              else ...[
-                _sectionLabel('Архив'),
-                const SizedBox(height: 12),
-                ...archive.map((q) {
-                  final locked = !app.isPremium;
-                  return Padding(
+              _sectionLabel('Прочитано · ${archive.length}'),
+              const SizedBox(height: 12),
+              if (archive.isEmpty)
+                const _EmptyArchiveHint()
+              else
+                ...archive.map(
+                  (q) => Padding(
                     padding: const EdgeInsets.only(bottom: 12),
                     child: QuoteCard(
                       quote: q,
-                      locked: locked,
                       isFavorite: app.isFavorite(q.id),
-                      onFavorite: locked
-                          ? null
-                          : () => app.toggleFavorite(q.id),
-                      onTapLocked: locked ? _openPaywall : null,
+                      onFavorite: () => app.toggleFavorite(q.id),
                     ),
-                  );
-                }),
-              ],
+                  ),
+                ),
             ],
           );
         },
@@ -146,7 +156,53 @@ class _HomeScreenState extends State<HomeScreen> {
   );
 }
 
-class _ArchiveLockedHint extends StatelessWidget {
+/// Компактное подтверждение, когда мысль дня уже прочитана.
+class _ReadConfirmation extends StatelessWidget {
+  const _ReadConfirmation({required this.streak});
+
+  final int streak;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 20),
+      decoration: BoxDecoration(
+        color: EmberColors.surface,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: EmberColors.ember.withValues(alpha: 0.4)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.check_circle, color: EmberColors.emberSoft),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Прочитано сегодня',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                ),
+                Text(
+                  'Возвращайся завтра за новой мыслью — огонёк горит $streak дн.',
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: EmberColors.textMuted,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Подсказка для пустого архива.
+class _EmptyArchiveHint extends StatelessWidget {
+  const _EmptyArchiveHint();
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -165,59 +221,17 @@ class _ArchiveLockedHint extends StatelessWidget {
           ),
           SizedBox(height: 12),
           Text(
-            'Архив откроется сегодня',
+            'Архив пока пуст',
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
           ),
           SizedBox(height: 6),
           Text(
-            'Отметь мысль дня прочитанной — и ниже появятся другие карточки.',
+            'Каждый день — новая карточка. Прочитанные мысли копятся здесь.',
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 14, color: EmberColors.textMuted),
           ),
         ],
       ),
-    );
-  }
-}
-
-class _ReadButton extends StatelessWidget {
-  const _ReadButton({required this.done, required this.onTap});
-
-  final bool done;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    if (done) {
-      return Container(
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: EmberColors.surface,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: EmberColors.ember.withValues(alpha: 0.4)),
-        ),
-        child: const Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.check_circle, color: EmberColors.emberSoft, size: 20),
-            SizedBox(width: 8),
-            Text(
-              'Прочитано сегодня',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-                color: EmberColors.emberSoft,
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-    return FilledButton.icon(
-      onPressed: onTap,
-      icon: const Icon(Icons.local_fire_department),
-      label: const Text('Прочитал — поддержать огонёк'),
     );
   }
 }

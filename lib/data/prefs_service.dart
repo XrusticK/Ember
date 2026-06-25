@@ -45,4 +45,10 @@ class PrefsService {
   int get reminderHour => _prefs.getInt(PrefKeys.reminderHour) ?? 20;
   Future<void> setReminderHour(int v) =>
       _prefs.setInt(PrefKeys.reminderHour, v);
+
+  /// История прочитанных карточек (id в хронологическом порядке).
+  List<String> get readQuotes =>
+      _prefs.getStringList(PrefKeys.readQuotes) ?? [];
+  Future<void> setReadQuotes(List<String> v) =>
+      _prefs.setStringList(PrefKeys.readQuotes, v);
 }

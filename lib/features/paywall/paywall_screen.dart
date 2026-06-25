@@ -22,10 +22,9 @@ class _PaywallScreenState extends State<PaywallScreen> {
   bool _busy = false;
 
   static const _perks = [
-    'Полный архив всех карточек',
-    'Все темы и настроения',
-    'Streak Freeze — заморозка стрика',
-    'Напоминание в удобное время',
+    'Streak Freeze — не потеряешь огонёк',
+    'Несколько мыслей в день, а не одна',
+    'Новые темы и подборки',
     'Безлимит избранного',
   ];
 

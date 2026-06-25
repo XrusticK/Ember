@@ -38,8 +38,11 @@ void main() {
     expect(find.text('Продолжить'), findsOneWidget);
 
     // Переход ко второму экрану — выбор настроения.
+    // pump с фиксированной длительностью (огонёк анимируется бесконечно,
+    // поэтому pumpAndSettle здесь не подходит).
     await tester.tap(find.text('Продолжить'));
-    await tester.pumpAndSettle();
+    await tester.pump(); // запуск анимации перехода
+    await tester.pump(const Duration(milliseconds: 400)); // конец перехода
     expect(find.text('Что тебе ближе сейчас?'), findsOneWidget);
     expect(find.text('Спокойствие'), findsOneWidget);
   });

@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 
 import '../core/constants.dart';
@@ -9,30 +7,25 @@ import '../data/models/quote.dart';
 
 /// Карточка-мысль. Шрифт и акцент подбираются под тему карточки.
 /// hero — большая «мысль дня», обычная — компактная карточка архива.
-/// locked — заблюренная карточка-замок (триггер пейвола для бесплатной версии).
 class QuoteCard extends StatelessWidget {
   const QuoteCard({
     super.key,
     required this.quote,
     this.hero = false,
-    this.locked = false,
     this.isFavorite = false,
     this.onFavorite,
-    this.onTapLocked,
   });
 
   final Quote quote;
   final bool hero;
-  final bool locked;
   final bool isFavorite;
   final VoidCallback? onFavorite;
-  final VoidCallback? onTapLocked;
 
   @override
   Widget build(BuildContext context) {
     final mood = MoodThemeInfo.fromId(quote.theme);
 
-    final card = Container(
+    return Container(
       width: double.infinity,
       padding: EdgeInsets.all(hero ? 28 : 20),
       decoration: BoxDecoration(
@@ -97,47 +90,6 @@ class QuoteCard extends StatelessWidget {
                 ),
               ),
             ),
-        ],
-      ),
-    );
-
-    if (!locked) return card;
-
-    // Заблокированная карточка архива: размытие + замок + CTA пейвола.
-    return GestureDetector(
-      onTap: onTapLocked,
-      child: Stack(
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(22),
-            child: ImageFiltered(
-              imageFilter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-              child: card,
-            ),
-          ),
-          Positioned.fill(
-            child: Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.lock_outline,
-                    color: EmberColors.gold.withValues(alpha: 0.95),
-                    size: 26,
-                  ),
-                  const SizedBox(height: 6),
-                  const Text(
-                    'Premium',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: EmberColors.gold,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
         ],
       ),
     );

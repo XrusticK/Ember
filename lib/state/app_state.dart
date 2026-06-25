@@ -24,6 +24,10 @@ class AppState extends ChangeNotifier {
   bool get reminderEnabled => _prefs.reminderEnabled;
   int get reminderHour => _prefs.reminderHour;
 
+  /// История прочитанных карточек, от старых к новым.
+  List<String> get readQuotes => _prefs.readQuotes;
+  bool isRead(String quoteId) => readQuotes.contains(quoteId);
+
   /// Стартовый роутинг — решается один раз, в одном месте.
   /// Подписку можно купить когда угодно, поэтому она больше не блокирует вход:
   ///   onboarding_done == false -> онбординг
@@ -57,9 +61,10 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Отметить карточку дня прочитанной и продвинуть стрик.
-  /// Возвращает true, если стрик увеличился (для праздничной анимации).
-  Future<bool> markTodayRead({DateTime? now}) async {
+  /// Отметить карточку дня прочитанной: добавить её в архив прочитанного
+  /// и продвинуть стрик. Возвращает true, если стрик увеличился
+  /// (для праздничной анимации).
+  Future<bool> markTodayRead({required String quoteId, DateTime? now}) async {
     final today = now ?? DateTime.now();
     final before = streak;
     final updated = nextStreak(
@@ -69,6 +74,11 @@ class AppState extends ChangeNotifier {
     );
     await _prefs.setStreakCount(updated);
     await _prefs.setLastOpenDate(dateKey(today));
+
+    // Добавляем карточку в историю прочитанного (без дублей).
+    if (!readQuotes.contains(quoteId)) {
+      await _prefs.setReadQuotes([...readQuotes, quoteId]);
+    }
     notifyListeners();
     return updated > before;
   }

@@ -11,6 +11,7 @@ class PrefKeys {
   static const selectedTheme = 'selected_theme';
   static const reminderEnabled = 'reminder_enabled';
   static const reminderHour = 'reminder_hour';
+  static const readQuotes = 'read_quotes'; // история прочитанных карточек
 }
 
 /// Тарифные планы на пейволле.
