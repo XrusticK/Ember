@@ -1,16 +1,92 @@
-# ember
+# 🔥 Ember — твоя ежедневная искра
 
-A new Flutter project.
+Одна мысль в день (цитата / совет / мантра). Открыл, прочитал, отметил → растёт
+**стрик** (огонёк). Огонёк горит, пока заходишь каждый день. Premium открывает полный
+архив, все темы и заморозку стрика.
 
-## Getting Started
+Тестовое задание на Flutter. Приложение под **iOS и Android**, полностью офлайн.
 
-This project is a starting point for a Flutter application.
+## Что внутри (по ТЗ)
 
-A few resources to get you started if this is your first Flutter project:
+- **Онбординг** (2 экрана): смысл продукта → выбор настроения
+  (Спокойствие · Фокус · Мотивация · Стоицизм).
+- **Пейвол**: два плана — Месяц / Год (год дешевле, выбран по умолчанию). «Продолжить»
+  *эмулирует* покупку (без реального биллинга) и пишет флаг в хранилище.
+- **Главный экран**: карточка «мысль дня» + кнопка ✓ «Прочитал», бейдж стрика (🔥),
+  лента-архив (для бесплатной версии заблюрена — нативный триггер пейвола), избранное.
+- **Сохранение подписки**: если «купил» — следующий запуск открывает сразу главный
+  экран, минуя онбординг и пейвол. Хранилище — `shared_preferences`.
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+## Архитектура
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+Слоистая, на `provider`:
+
+```
+core    → константы, тема
+data    → PrefsService (обёртка SharedPreferences), QuotesRepository, модель Quote
+state   → AppState (ChangeNotifier, единый источник правды) + чистая логика стрика
+features→ экраны: onboarding / paywall / home
+widgets → переиспользуемый UI: QuoteCard, StreakBadge
+assets  → quotes.json (локальный контент)
+```
+
+Ключевые принципы:
+- **Один источник правды.** `AppState` — единственный, кто трогает `PrefsService`;
+  UI не лезет в хранилище и ассеты напрямую.
+- **Роутинг в одном месте.** `AppState.resolveInitialRoute()`:
+  `onboarding_done == false → онбординг`, иначе `is_premium == false → пейвол`,
+  иначе → главный. Это и есть «купил → сразу главный».
+- **Тестируемая логика.** Подсчёт стрика вынесен в чистую функцию
+  (`state/streak.dart`) и покрыт юнит-тестами, без виджетов.
+
+### Ключи хранилища
+
+`onboarding_done`, `is_premium`, `streak_count`, `last_open_date`, `favorites`,
+`selected_theme`. Объявлены как константы в `core/constants.dart`.
+
+### Правило стрика
+
+Сравниваем только дату (`yyyy-MM-dd`): тот же день — без изменений; вчера — `+1`;
+раньше/пусто — сброс на `1`.
+
+## Структура проекта
+
+```
+lib/
+  main.dart, app.dart
+  core/      constants.dart, theme.dart
+  data/      prefs_service.dart, quotes_repository.dart, models/quote.dart
+  state/     app_state.dart, streak.dart
+  features/  onboarding/ paywall/ home/
+  widgets/   quote_card.dart, streak_badge.dart
+assets/      quotes.json
+test/        widget_test.dart  (юнит-тесты стрика)
+```
+
+## Запуск
+
+```bash
+flutter pub get
+flutter run            # на эмуляторе/устройстве iOS или Android
+flutter run -d edge    # web — для быстрого прогона
+flutter test           # юнит-тесты
+flutter analyze        # линт
+```
+
+## Где здесь нейросеть
+
+AI использовался **в процессе разработки** (обязательная часть ТЗ): генерация
+экранов и виджетов, рефакторинг стартовой логики в роутер, вынос и проверка логики
+стрика юнит-тестами, поиск ошибок через `flutter analyze`.
+
+Опциональный бонус (в планах) — кнопка «Сгенерируй мысль под моё настроение» через
+**Gemini API (Flash)**: берёт выбранную тему и возвращает свежую карточку. Ключ
+передаётся через `--dart-define`, не коммитится. Офлайн-версия на JSON закрывает ТЗ
+полностью и без него.
+
+## Что бы улучшил при большем времени
+
+- Реальный биллинг (`in_app_purchase`) за тем же флагом `is_premium`.
+- Streak Freeze + локальные напоминания (premium-фичи).
+- Prefs за интерфейсом-репозиторием ради тестируемости и будущего бэкенда.
+- Тема оформления под выбранное настроение, более богатые анимации.

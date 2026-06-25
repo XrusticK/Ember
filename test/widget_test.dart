@@ -1,30 +1,50 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
-import 'package:flutter/material.dart';
+import 'package:ember/state/streak.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:ember/main.dart';
-
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  group('nextStreak', () {
+    final today = DateTime(2026, 6, 25);
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    test('первый день при пустой дате -> 1', () {
+      expect(nextStreak(current: 0, lastOpenDate: null, today: today), 1);
+    });
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+    test('повторно в тот же день -> без изменений (идемпотентно)', () {
+      expect(
+        nextStreak(current: 5, lastOpenDate: '2026-06-25', today: today),
+        5,
+      );
+    });
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    test('заходил вчера -> +1', () {
+      expect(
+        nextStreak(current: 5, lastOpenDate: '2026-06-24', today: today),
+        6,
+      );
+    });
+
+    test('пропуск дня -> сброс на 1', () {
+      expect(
+        nextStreak(current: 5, lastOpenDate: '2026-06-22', today: today),
+        1,
+      );
+    });
+
+    test('переход через месяц считается корректно', () {
+      expect(
+        nextStreak(
+          current: 3,
+          lastOpenDate: '2026-05-31',
+          today: DateTime(2026, 6, 1),
+        ),
+        4,
+      );
+    });
+  });
+
+  group('dateKey', () {
+    test('форматирует с ведущими нулями', () {
+      expect(dateKey(DateTime(2026, 1, 5)), '2026-01-05');
+    });
   });
 }

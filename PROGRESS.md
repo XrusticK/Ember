@@ -1,72 +1,75 @@
-# PROGRESS — Ember
+# ПРОГРЕСС — Ember
 
-Tracker for the test assignment. Tick items as they land.
+Трекер по тестовому заданию. Отмечаем по мере готовности.
 
-**Repo:** https://github.com/XrusticK/Ember
-**Stack:** Flutter 3.38.7 · Dart 3.10.7 · provider + shared_preferences
-**Run target for screencast:** `flutter run -d edge` (mobile-sized window)
+**Репозиторий:** https://github.com/XrusticK/Ember
+**Стек:** Flutter 3.38.7 · Dart 3.10.7 · provider + shared_preferences
+**Платформы:** iOS и Android (есть также web/windows для быстрого прогона)
 
 ---
 
-## Milestones
+## Майлстоуны
 
 ### 0. Scaffold
-- [ ] `flutter create` project, set app name / package id
-- [ ] add deps: `provider`, `shared_preferences`
-- [ ] register `assets/quotes.json` in `pubspec.yaml`
-- [ ] `core/constants.dart` (pref keys, plan ids), `core/theme.dart` (ember palette)
+- [x] `flutter create`, имя проекта `ember`
+- [x] зависимости: `provider`, `shared_preferences`
+- [x] `assets/quotes.json` зарегистрирован в `pubspec.yaml`
+- [x] `core/constants.dart` (ключи, планы, темы), `core/theme.dart` (палитра)
+- [x] git init + remote + первый push
 
-### 1. Data layer
-- [ ] `Quote` model + `assets/quotes.json` (~15–20 cards across themes)
-- [ ] `PrefsService` — typed get/set for every key in the contract
-- [ ] `QuotesRepository` — load + parse JSON
+### 1. Data-слой
+- [x] модель `Quote` + `assets/quotes.json` (20 карточек по 4 темам)
+- [x] `PrefsService` — типизированные get/set по всем ключам
+- [x] `QuotesRepository` — загрузка + парсинг JSON
 
 ### 2. State
-- [ ] `AppState (ChangeNotifier)` — premium / onboarding / streak / favorites
-- [ ] `resolveInitialRoute()` — onboarding → paywall → home
-- [ ] streak logic (same-day idempotent / yesterday++ / reset) — **unit tested**
+- [x] `AppState (ChangeNotifier)` — premium / onboarding / streak / favorites
+- [x] `resolveInitialRoute()` — онбординг → пейвол → главный
+- [x] логика стрика (тот же день / вчера+1 / сброс) — **покрыта юнит-тестами**
 
-### 3. Screens (the assignment)
-- [ ] **Onboarding** screen 1 — "One thought a day…" + ember illustration
-- [ ] **Onboarding** screen 2 — mood pick (Calm / Focus / Motivation / Stoicism)
-- [ ] "Continue" → set `onboarding_done`, go to Paywall
-- [ ] **Paywall** — Month / Year cards, Year preselected & marked "−40%"
-- [ ] Paywall "Continue" → set `is_premium = true`, go to Home
-- [ ] **Home** — daily card + ✓ "Read" (advances streak)
-- [ ] Home — streak badge (🔥 n) up top
-- [ ] Home — archive list below, locked/blurred for free users
-- [ ] favorite (❤️) toggle persisted
+### 3. Экраны
+- [x] Онбординг, экран 1 — «Одна мысль в день…» + огонёк
+- [x] Онбординг, экран 2 — выбор настроения (Спокойствие/Фокус/Мотивация/Стоицизм)
+- [x] «Продолжить» → ставит `onboarding_done`, ведёт на пейвол
+- [x] Пейвол — Месяц / Год, год выбран по умолчанию и помечен «−40%»
+- [x] «Продолжить» на пейволле → ставит `is_premium = true`, ведёт на главный
+- [x] Главный — карточка дня + ✓ «Прочитал» (двигает стрик)
+- [x] Главный — бейдж стрика (🔥 n) сверху
+- [x] Главный — лента-архив, заблюрена/заперта для бесплатной версии
+- [x] избранное (❤️) сохраняется
 
-### 4. Persistence acceptance
-- [ ] cold start as premium → lands on Home, skips onboarding + paywall
-- [ ] cold start, onboarded but not premium → lands on Paywall
-- [ ] cold start, fresh install → lands on Onboarding
-- [ ] streak survives app restart
+### 4. Приёмка персистентности
+- [x] холодный старт premium → сразу главный, минуя онбординг и пейвол
+- [x] холодный старт, онбординг пройден, не premium → пейвол
+- [x] холодный старт, чистая установка → онбординг
+- [x] стрик переживает перезапуск
 
-### 5. Polish
-- [ ] `flutter analyze` clean
-- [ ] `dart format lib`
-- [ ] README (architecture / structure / "what I'd improve with more time")
-- [ ] verify full flow on screencast run
+### 5. Полиш
+- [x] `flutter analyze` — чисто
+- [x] `flutter test` — все тесты зелёные
+- [x] `flutter build web` — полная сборка проходит
+- [x] README (архитектура / структура / что бы улучшил)
+- [ ] финальная проверка всего флоу на записи экрана
 
-### 6. Optional AI bonus (only if time allows)
-- [ ] "Generate a thought for my mood" → Gemini Flash via `--dart-define` key
-- [ ] graceful fallback to local JSON on error / no key
+### 6. Опциональный AI-бонус (если останется время)
+- [ ] «Сгенерируй мысль под настроение» → Gemini Flash, ключ через `--dart-define`
+- [ ] аккуратный фолбэк на локальный JSON при ошибке/без ключа
 
 ### 7. Ship
-- [ ] git init + connect remote `https://github.com/XrusticK/Ember`
-- [ ] commit + push
+- [x] git remote `https://github.com/XrusticK/Ember`
+- [ ] финальный коммит + push
 
 ---
 
-## Notes / decisions
-- Offline-first: local JSON is the source of truth so the screencast never breaks.
-- AI shown **during development** (codegen, refactor, bug-hunt) is the mandatory part;
-  the in-app Gemini button is a bonus, not a requirement.
-- Routing logic lives in exactly one place — see CLAUDE.md.
+## Решения
+- Офлайн-first: локальный JSON — источник правды, чтобы запись экрана не падала.
+- AI **в процессе разработки** (генерация, рефакторинг, поиск багов) — обязательная
+  часть; встроенная Gemini-кнопка — бонус, а не требование.
+- Логика роутинга — ровно в одном месте (см. CLAUDE.md).
+- Коммиты на русском.
 
-## What I'd improve with more time
-- Real billing (`in_app_purchase`) behind the same `is_premium` flag.
-- Streak-freeze + local notification reminder (premium perks).
-- Migrate prefs to a small repository interface for testability / future backend.
-- Theming per selected mood; richer card transitions.
+## Что бы улучшил при большем времени
+- Реальный биллинг (`in_app_purchase`) за тем же флагом `is_premium`.
+- Streak Freeze + локальные напоминания (premium-фичи).
+- Вынести prefs за интерфейс-репозиторий ради тестируемости / будущего бэкенда.
+- Тема под выбранное настроение; более богатые анимации карточек.
