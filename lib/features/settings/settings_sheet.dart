@@ -99,25 +99,43 @@ class SettingsSheet extends StatelessWidget {
               }
             },
           ),
-          if (app.reminderEnabled)
-            Align(
-              alignment: Alignment.centerLeft,
-              child: TextButton.icon(
-                icon: const Icon(Icons.schedule, size: 18),
-                label: const Text('Выбрать время'),
-                onPressed: () async {
-                  final picked = await showTimePicker(
-                    context: context,
-                    initialTime: TimeOfDay(hour: app.reminderHour, minute: 0),
-                  );
-                  if (picked != null) {
-                    await app.setReminder(true, hour: picked.hour);
-                  }
-                },
-              ),
+          if (app.reminderEnabled) ...[
+            const SizedBox(height: 8),
+            const Text(
+              'Время',
+              style: TextStyle(fontSize: 13, color: EmberColors.textMuted),
             ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: _presetHours.map((h) {
+                final isOn = app.reminderHour == h;
+                return ChoiceChip(
+                  label: Text('${h.toString().padLeft(2, '0')}:00'),
+                  selected: isOn,
+                  showCheckmark: false,
+                  backgroundColor: EmberColors.surfaceAlt,
+                  selectedColor: EmberColors.ember.withValues(alpha: 0.25),
+                  side: BorderSide(
+                    color: isOn ? EmberColors.ember : Colors.transparent,
+                  ),
+                  labelStyle: TextStyle(
+                    color: isOn
+                        ? EmberColors.emberSoft
+                        : EmberColors.textPrimary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  onSelected: (_) => app.setReminder(true, hour: h),
+                );
+              }).toList(),
+            ),
+          ],
         ],
       ),
     );
   }
+
+  // Удобные пресеты времени напоминания.
+  static const _presetHours = [7, 9, 12, 15, 18, 20, 22];
 }
