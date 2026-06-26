@@ -1,47 +1,92 @@
-# 🔥 Ember
+# 🔥 Ember — твоя ежедневная искра
 
-Одна мысль в день: открыл, прочитал, отметил → растёт **стрик** (огонёк). Тестовое
-задание на Flutter, под iOS и Android, работает офлайн.
+Одна мысль в день (цитата / совет / мантра). Открыл, прочитал, отметил → растёт
+**стрик** (огонёк). Огонёк горит, пока заходишь каждый день.
 
-## По ТЗ
+Тестовое задание на Flutter. Приложение под **iOS и Android**, работает офлайн.
 
-- **Онбординг** (2 экрана) + «Продолжить».
-- **Пейвол** при входе: Месяц / Год (год −40%). «Продолжить» эмулирует покупку.
-- **Главный экран**: мысль дня + архив прочитанного.
-- **Сохранение состояния** (`shared_preferences`): купил → при следующем запуске пейвол
-  пропускается, сразу главный экран.
+## Что внутри (по ТЗ)
 
-## Сверх ТЗ
+- **Онбординг** (2 экрана): смысл продукта → выбор настроения
+  (Спокойствие · Фокус · Мотивация · Стоицизм). Кнопка «Продолжить».
+- **Пейвол**: два плана — Месяц / Год (год дешевле, −40%, выбран по умолчанию).
+  «Продолжить» *эмулирует* покупку (без реального биллинга) и пишет флаг в хранилище.
+- **Главный экран**: «мысль дня» (новая каждый день) + кнопка «Прочитал», стрик,
+  избранное. После прочтения карточка уходит в **архив** — там копятся только
+  прочитанные карточки (личная история), новые сверху.
+- **Сохранение состояния**: флаг `is_premium` и стрик персистентны
+  (`shared_preferences`). Покупка переживает перезапуск, главный экран открывается
+  сразу — онбординг и пейвол повторно не показываются.
 
-100 реальных цитат по 4 темам (свой шрифт и акцент у каждой), ежедневные пуши с выбором
-времени, докупка в любой момент, анимированный огонёк и всплеск при росте стрика.
+### Сверх ТЗ (инициатива)
+
+- Подписку можно купить **в любой момент** (баннер на главном экране), а не только
+  на старте.
+- **100 реальных цитат** по 4 темам; у каждой темы **свой шрифт и акцент**
+  (Lora / Manrope / Montserrat / Playfair Display).
+- **Пуши**: ежедневное локальное напоминание (включается в настройках, выбор времени).
+- **Делайт**: анимированный огонёк, всплеск при росте стрика, плавные переходы,
+  тёмно-«угольная» палитра с золотым акцентом.
 
 ## Архитектура
 
-Слоистая, на `provider`. Единый `AppState (ChangeNotifier)` — источник правды, только он
-трогает `PrefsService`. Стартовый роутинг — в одном месте (`resolveInitialRoute`). Логика
-стрика вынесена в чистую функцию и покрыта тестами.
+Слоистая, на `provider`:
+
+```
+core    → константы, тема, mood_style (шрифт + акцент под тему)
+data    → PrefsService, QuotesRepository, NotificationService, модель Quote
+state   → AppState (ChangeNotifier, единый источник правды) + чистая логика стрика
+features→ экраны: onboarding / paywall / home / settings
+widgets → QuoteCard, StreakBadge, EmberFlame, StreakCelebration, PremiumBanner
+assets  → quotes.json (100 цитат, локальный контент)
+```
+
+Ключевые принципы:
+- **Один источник правды.** `AppState` — единственный, кто трогает `PrefsService`;
+  UI не читает хранилище и ассеты напрямую.
+- **Роутинг в одном месте.** `AppState.resolveInitialRoute()`:
+  `onboarding_done == false → онбординг`, иначе → главный экран.
+- **Тестируемая логика.** Подсчёт стрика вынесен в чистую функцию
+  (`state/streak.dart`) и покрыт юнит-тестами, без виджетов.
+
+### Ключи хранилища
+
+`onboarding_done`, `is_premium`, `streak_count`, `last_open_date`, `favorites`,
+`selected_theme`, `reminder_enabled`, `reminder_hour`, `read_quotes`. Объявлены как
+константы в `core/constants.dart`.
+
+### Правило стрика
+
+Сравниваем только дату (`yyyy-MM-dd`): тот же день — без изменений; вчера — `+1`;
+раньше / пусто — сброс на `1`.
+
+## Структура проекта
 
 ```
 lib/
-  core/      constants, theme, mood_style
-  data/      prefs_service, quotes_repository, notification_service, models/quote
-  state/     app_state, streak
-  features/  onboarding, paywall, home, settings
+  main.dart, app.dart
+  core/      constants.dart, theme.dart, mood_style.dart
+  data/      prefs_service.dart, quotes_repository.dart, notification_service.dart, models/quote.dart
+  state/     app_state.dart, streak.dart
+  features/  onboarding/ paywall/ home/ settings/
   widgets/   quote_card, streak_badge, ember_flame, streak_celebration, premium_banner
-assets/quotes.json   test/ (стрик, онбординг, архив)
+assets/      quotes.json  (100 цитат)
+test/        widget_test.dart, onboarding_flow_test.dart, read_archive_test.dart
 ```
 
 ## Запуск
 
 ```bash
 flutter pub get
-flutter run        # iOS / Android
-flutter test
+flutter run            # на эмуляторе/устройстве iOS или Android
+flutter test           # тесты
+flutter analyze        # линт
 ```
 
-## Что бы улучшил
+## Что бы улучшил при большем времени
 
 - Реальный биллинг (`in_app_purchase`) за тем же флагом `is_premium`.
-- Streak Freeze как настоящую premium-механику.
-- Генерацию мысли под настроение через LLM (Gemini Flash) с фолбэком на JSON.
+- Streak Freeze (заморозка стрика) как реальная premium-механика.
+- Prefs за интерфейсом-репозиторием ради тестируемости и будущего бэкенда.
+- Генерация мысли под настроение через LLM (например, Gemini Flash) с фолбэком на
+  локальный JSON.
