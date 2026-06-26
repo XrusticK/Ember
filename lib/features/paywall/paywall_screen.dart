@@ -5,13 +5,19 @@ import '../../core/constants.dart';
 import '../../core/theme.dart';
 import '../../state/app_state.dart';
 import '../../widgets/ember_flame.dart';
+import '../home/home_screen.dart';
 
 /// Пейвол: два плана (Месяц / Год). Год выбран по умолчанию и выгоднее.
 /// «Продолжить» эмулирует покупку и пишет флаг в хранилище.
-/// Открывается по запросу (баннер / замок архива), подписку можно купить
-/// в любой момент.
+///
+/// [isGate] == true — пейвол показан при входе (онбординг → пейвол → главный):
+/// покупка и «Позже» ведут на главный экран, крестика-закрытия нет.
+/// [isGate] == false — пейвол открыт с баннера поверх главного: есть крестик,
+/// покупка/закрытие возвращают назад.
 class PaywallScreen extends StatefulWidget {
-  const PaywallScreen({super.key});
+  const PaywallScreen({super.key, this.isGate = false});
+
+  final bool isGate;
 
   @override
   State<PaywallScreen> createState() => _PaywallScreenState();
@@ -32,10 +38,21 @@ class _PaywallScreenState extends State<PaywallScreen> {
     setState(() => _busy = true);
     await context.read<AppState>().purchase(_selected);
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Premium активирован 🔥 Архив открыт')),
-    );
-    Navigator.of(context).maybePop();
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Premium активирован 🔥')));
+    _leave();
+  }
+
+  /// Уйти с пейвола: при входе — на главный, с баннера — назад.
+  void _leave() {
+    if (widget.isGate) {
+      Navigator.of(
+        context,
+      ).pushReplacement(MaterialPageRoute(builder: (_) => const HomeScreen()));
+    } else {
+      Navigator.of(context).maybePop();
+    }
   }
 
   @override
@@ -43,10 +60,12 @@ class _PaywallScreenState extends State<PaywallScreen> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.transparent,
-        leading: IconButton(
-          icon: const Icon(Icons.close),
-          onPressed: () => Navigator.of(context).maybePop(),
-        ),
+        leading: widget.isGate
+            ? null
+            : IconButton(
+                icon: const Icon(Icons.close),
+                onPressed: () => Navigator.of(context).maybePop(),
+              ),
       ),
       body: SafeArea(
         child: Padding(
@@ -94,6 +113,14 @@ class _PaywallScreenState extends State<PaywallScreen> {
                       : const Text('Продолжить'),
                 ),
               ),
+              if (widget.isGate)
+                TextButton(
+                  onPressed: _busy ? null : _leave,
+                  child: const Text(
+                    'Позже',
+                    style: TextStyle(color: EmberColors.textMuted),
+                  ),
+                ),
               const Padding(
                 padding: EdgeInsets.only(bottom: 8),
                 child: Text(

@@ -6,7 +6,7 @@ import '../../core/mood_style.dart';
 import '../../core/theme.dart';
 import '../../state/app_state.dart';
 import '../../widgets/ember_flame.dart';
-import '../home/home_screen.dart';
+import '../paywall/paywall_screen.dart';
 
 /// Онбординг из двух экранов: смысл продукта -> выбор настроения.
 class OnboardingScreen extends StatefulWidget {
@@ -42,9 +42,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     final theme = _selected ?? MoodTheme.motivation;
     await context.read<AppState>().completeOnboarding(theme);
     if (!mounted) return;
-    Navigator.of(
-      context,
-    ).pushReplacement(MaterialPageRoute(builder: (_) => const HomeScreen()));
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(builder: (_) => const PaywallScreen(isGate: true)),
+    );
   }
 
   @override

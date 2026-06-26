@@ -6,7 +6,7 @@ import '../data/prefs_service.dart';
 import 'streak.dart';
 
 /// Куда вести пользователя при запуске.
-enum InitialRoute { onboarding, home }
+enum InitialRoute { onboarding, paywall, home }
 
 /// Единственный источник правды по состоянию приложения.
 /// Только этот класс трогает [PrefsService].
@@ -29,11 +29,17 @@ class AppState extends ChangeNotifier {
   bool isRead(String quoteId) => readQuotes.contains(quoteId);
 
   /// Стартовый роутинг — решается один раз, в одном месте.
-  /// Подписку можно купить когда угодно, поэтому она больше не блокирует вход:
   ///   onboarding_done == false -> онбординг
+  ///   is_premium == false      -> пейвол (показывается при входе)
   ///   иначе                    -> главный экран
-  InitialRoute resolveInitialRoute() =>
-      onboardingDone ? InitialRoute.home : InitialRoute.onboarding;
+  /// Купил подписку — при следующем запуске пейвол пропускается.
+  /// Пейвол не «ловушка»: с него можно «Позже» уйти на главный, а докупить —
+  /// из баннера на главном экране.
+  InitialRoute resolveInitialRoute() {
+    if (!onboardingDone) return InitialRoute.onboarding;
+    if (!isPremium) return InitialRoute.paywall;
+    return InitialRoute.home;
+  }
 
   Future<void> completeOnboarding(MoodTheme theme) async {
     await _prefs.setSelectedTheme(theme.id);

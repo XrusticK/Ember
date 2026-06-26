@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'core/theme.dart';
 import 'features/home/home_screen.dart';
 import 'features/onboarding/onboarding_screen.dart';
+import 'features/paywall/paywall_screen.dart';
 import 'state/app_state.dart';
 
 class EmberApp extends StatelessWidget {
@@ -29,6 +30,7 @@ class _RootRouter extends StatelessWidget {
     final route = context.read<AppState>().resolveInitialRoute();
     return switch (route) {
       InitialRoute.onboarding => const OnboardingScreen(),
+      InitialRoute.paywall => const PaywallScreen(isGate: true),
       InitialRoute.home => const HomeScreen(),
     };
   }
